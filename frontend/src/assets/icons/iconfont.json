@@ -1,0 +1,37 @@
+{
+  "id": "5056910",
+  "name": "水库群",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "45140024",
+      "name": "水库",
+      "font_class": "shuiku-01",
+      "unicode": "e608",
+      "unicode_decimal": 58888
+    },
+    {
+      "icon_id": "25680025",
+      "name": "发电站3",
+      "font_class": "fadianzhan",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "20553170",
+      "name": "模型参数-hover",
+      "font_class": "moxingcanshu-hover",
+      "unicode": "e621",
+      "unicode_decimal": 58913
+    },
+    {
+      "icon_id": "42706410",
+      "name": "模型运行状态统计",
+      "font_class": "moxingyunhangzhuangtaitongji",
+      "unicode": "e612",
+      "unicode_decimal": 58898
+    }
+  ]
+}

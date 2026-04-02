@@ -15,11 +15,6 @@
           <span class="system-name">水土保持智能监管平台</span>
         </div>
       </RoundedTrapezoid>
-      
-      <!-- 右侧链接 -->
-      <div class="header-right">
-        <a class="enter-link" @click="goToHome">进入平台</a>
-      </div>
     </div>
 
     <!-- 文件夹内容区域 -->
@@ -42,58 +37,67 @@
         <div class="main-title">
           <img :src="titlePicture" alt="标题图片" height="200rem">
         </div>
-        <p class="sub-title">守护绿水青山,建设美丽中国</p>
+        <p class="sub-title">SOIL & WATER INTELLIGENT MANAGEMENT</p>
+        <a class="enter-button" @click="goToHome">
+          <img :src="enterImg" alt="进入平台"  height="18rem"/>
+        </a>
       </div>
     </div>
 
-    <!-- 幻灯片区域 -->
-    <div class="text-animation-section">
-      <div class="text-container">
-        <div class="animated-text" :class="{ 'animate': showText1 }">
-          <h2 class="text-line-1">123</h2>
-        </div>
-        <div class="animated-text" :class="{ 'animate': showText2 }">
-          <h2 class="text-line-2">456</h2>
-        </div>
-      </div>
 
-      <div class="carousel">
-        <button class="carousel-btn prev" @click="prevCarouselSlide">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="carousel-track" ref="carouselTrack">
-          <div 
-            v-for="(item, index) in carouselItems" 
-            :key="index"
-            class="carousel-item"
-          >
-            <img :src="item.image" :alt="item.title" />
-            <div class="carousel-item-content">
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.description }}</p>
+    <div class="content-section">
+      <!-- 幻灯片区域 -->
+      <div class="text-animation-section">
+        <div class="text-container">
+          <div class="animated-text" :class="{ 'animate': showText1 }">
+            <h2 class="text-line-1">应用场景</h2>
+          </div>
+          <!-- <div class="animated-text" :class="{ 'animate': showText2 }">
+            <h2 class="text-line-2">456</h2>
+          </div> -->
+        </div>
+
+        <div class="carousel">
+          <!-- 左右滑动按钮 -->
+          <!-- <button class="carousel-btn prev" @click="prevCarouselSlide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button> -->
+          <div class="carousel-track" ref="carouselTrack">
+            <div
+              v-for="(item, index) in carouselItems"
+              :key="index"
+              class="carousel-item"
+            >
+              <img :src="item.image" :alt="item.title" />
+              <div class="carousel-item-content">
+                <h3>{{ item.title }}</h3>
+              </div>
+
             </div>
           </div>
+          <!-- <button class="carousel-btn next" @click="nextCarouselSlide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button> -->
         </div>
-        <button class="carousel-btn next" @click="nextCarouselSlide">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
       </div>
+
+      <!-- 滚动文字区域 -->
+      <div class="marquee-container">
+        <div class="marquee-content" ref="marqueeContent">
+          <div class="marquee-items">
+            <span v-for="(src, index) in marqueeTexts" :key="index" class="marquee-text">
+              <img :src="src" alt="滚动图片" height="80rem">
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- 滚动文字区域 -->
-    <div class="marquee-container">
-      <div class="marquee-content" ref="marqueeContent">
-        <div class="marquee-items">
-          <span v-for="(text, index) in marqueeTexts" :key="index" class="marquee-text">
-            {{ text }}
-          </span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -112,48 +116,34 @@ let slideTimer: number | null = null
 const carouselTrack = ref<HTMLElement | null>(null)
 const carouselIndex = ref(0)
 const marqueeContent = ref<HTMLElement | null>(null)
+const enterImg = new URL('@/assets/pictures/enter.png', import.meta.url).href
 const marqueeTexts = [
-  '欢迎访问',
-  '守护绿水青山',
-  '建设美丽中国'
+  new URL('@/assets/pictures/roll/p1.png', import.meta.url).href,
+  new URL('@/assets/pictures/roll/p2.png', import.meta.url).href,
+  new URL('@/assets/pictures/roll/p3.png', import.meta.url).href
 ]
 const carouselItems = [
   {
-    image: new URL('@/assets/pictures/p1.png', import.meta.url).href,
-    title: '项目一',
-    description: '项目描述内容'
+    image: new URL('@/assets/pictures/carousel/check-dam.png', import.meta.url).href,
+    title: '淤地坝',
+    description: ''
   },
   {
-    image: new URL('@/assets/pictures/p2.png', import.meta.url).href,
-    title: '项目二',
-    description: '项目描述内容'
+    image: new URL('@/assets/pictures/carousel/disorder.png', import.meta.url).href,
+    title: '河湖四乱',
+    description: ''
   },
   {
-    image: new URL('@/assets/pictures/p3.jpg', import.meta.url).href,
-    title: '项目三',
-    description: '项目描述内容'
+    image: new URL('@/assets/pictures/carousel/pattern-spot.png', import.meta.url).href,
+    title: '工地水保图斑',
+    description: ''
   },
-  {
-    image: new URL('@/assets/pictures/p1.png', import.meta.url).href,
-    title: '项目四',
-    description: '项目描述内容'
-  },
-  {
-    image: new URL('@/assets/pictures/p2.png', import.meta.url).href,
-    title: '项目五',
-    description: '项目描述内容'
-  },
-  {
-    image: new URL('@/assets/pictures/p3.jpg', import.meta.url).href,
-    title: '项目六',
-    description: '项目描述内容'
-  }
 ]
 
 const backgrounds = [
-  new URL('@/assets/pictures/p1.png', import.meta.url).href,
-  new URL('@/assets/pictures/p2.png', import.meta.url).href,
-  new URL('@/assets/pictures/p3.jpg', import.meta.url).href
+  new URL('@/assets/pictures/landing/p1.png', import.meta.url).href,
+  new URL('@/assets/pictures/landing/p2.png', import.meta.url).href,
+  new URL('@/assets/pictures/landing/p3.jpg', import.meta.url).href
 ]
 
 const titlePicture = new URL('@/assets/pictures/title.png', import.meta.url).href 
@@ -299,22 +289,9 @@ const initMarquee = () => {
   .system-name {
     font-size: 18px;
     color: white;
+    text-shadow: 0 0 10px rgba(247, 253, 253, 0.5);
     font-weight: 600;
     letter-spacing: 0.02em;
-  }
-}
-
-.header-right {
-  .enter-link {
-    font-size: 16px;
-    color: #211C1B;
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.3s;
-    
-    &:hover {
-      opacity: 0.7;
-    }
   }
 }
 
@@ -394,16 +371,50 @@ const initMarquee = () => {
   .sub-title {
     font-size: 20px;
     color: rgba(255, 255, 255, 0.95);
-    margin: 0;
+    margin: 0 0 30px;
     font-weight: 400;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   }
+
+  .enter-button {
+    display: inline-block;
+    padding: 10px 32px;
+    font-size: 16px;
+    font-weight: 400;
+    color: black;
+    background: rgba(246, 139, 33, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    // box-shadow: 0 4px 12px rgba(246, 139, 33, 0.9)
+
+    &:hover {
+      // background: rgba(33, 28, 27, 1);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 4px 12px rgba(246, 139, 33, 0.9),
+        0 8px 30px rgba(246, 139, 33, 0.7),
+        0 20px 60px rgba(246, 139, 33, 0.5);
+    }
+  }
+}
+
+.content-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .text-animation-section {
-  padding: 40px 0;
+  flex: 1;
+  padding: 0 8rem;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .text-container {
@@ -424,7 +435,7 @@ const initMarquee = () => {
   }
 
   h2 {
-    font-size: 48px;
+    font-size: 78px;
     font-weight: 600;
     color: #211C1B;
     margin: 20px 0;
@@ -433,7 +444,7 @@ const initMarquee = () => {
 }
 
 .marquee-container {
-  margin-top: 12rem;
+  // margin-top: 8rem;
   width: 100%;
   overflow: hidden;
   padding: 20px 0;
@@ -464,7 +475,7 @@ const initMarquee = () => {
 
 .carousel {
   position: relative;
-  width: 60%;
+  width: 65%;
   margin-left: auto;
   margin-right: 0;
   overflow: hidden;
@@ -477,11 +488,13 @@ const initMarquee = () => {
   .carousel-item {
     flex: 0 0 calc(100% / 3.2);
     margin-right: 20px;
-    border-radius: 16px;
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
 
     img {
+      border-radius: 16px;
       width: 100%;
       height: 24rem;
       object-fit: cover;
@@ -489,27 +502,21 @@ const initMarquee = () => {
     }
 
     .carousel-item-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       text-align: center;
       padding: 16px 24px;
-      max-width: 100%;
-      // background: rgba(17, 12, 8, 0.85);
-      // border-radius: 12px;
-      // backdrop-filter: blur(4px);
+      // background: white;
 
       h3 {
+        text-shadow: 3px 0px 10px rgba(0, 0, 0, 0.3);
         font-size: 2rem;
         font-weight: 600;
-        color: white;
+        color: #211C1B;
         margin: 0 0 8px;
       }
 
       p {
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.9);
+        color: #666;
         margin: 0;
       }
     }
@@ -518,7 +525,7 @@ const initMarquee = () => {
   .carousel-btn {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-90%);
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -562,10 +569,6 @@ const initMarquee = () => {
     }
   }
   
-  .header-right .enter-link {
-    font-size: 15px;
-  }
-  
   .content-overlay {
     .main-title {
       font-size: 42px;
@@ -574,10 +577,19 @@ const initMarquee = () => {
     .sub-title {
       font-size: 18px;
     }
+
+    .enter-button {
+      font-size: 15px;
+      padding: 10px 28px;
+    }
   }
   
   .animated-text h2 {
     font-size: 36px;
+  }
+
+  .text-animation-section {
+    padding: 0 6rem;
   }
 }
 
@@ -595,10 +607,6 @@ const initMarquee = () => {
     }
   }
   
-  .header-right .enter-link {
-    font-size: 14px;
-  }
-  
   .folder-content {
     min-height: 400px;
   }
@@ -611,11 +619,21 @@ const initMarquee = () => {
     
     .sub-title {
       font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .enter-button {
+      font-size: 14px;
+      padding: 10px 24px;
     }
   }
   
   .animated-text h2 {
     font-size: 28px;
+  }
+
+  .text-animation-section {
+    padding: 0 4rem;
   }
 }
 
@@ -633,10 +651,6 @@ const initMarquee = () => {
     }
   }
   
-  .header-right .enter-link {
-    font-size: 13px;
-  }
-  
   .folder-content {
     min-height: 350px;
     border-radius: 0 8px 8px 8px;
@@ -650,11 +664,21 @@ const initMarquee = () => {
     
     .sub-title {
       font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .enter-button {
+      font-size: 13px;
+      padding: 8px 20px;
     }
   }
   
   .animated-text h2 {
     font-size: 22px;
+  }
+
+  .text-animation-section {
+    padding: 0 2rem;
   }
 }
 </style>

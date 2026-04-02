@@ -30,8 +30,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const currentTime = ref('')
-const navItems: string[] = ['模型介绍', '中间展示', '结果分析', '情景评价']
-
+const navItems: string[] = ['首页', '动态监测', '状态评估', '解译成果']
 const emit = defineEmits<{ (e: 'nav', key: string): void }>()
 const onClickNav = (item: string) => {
   emit('nav', item)
@@ -70,7 +69,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 60px;
-  background: #000E38;
+  background: #000000;
 //    background: linear-gradient(135deg, rgba(30, 60, 114, 0.8) 0%, rgba(42, 82, 152, 0.8) 100%);
   // background: rgb(51, 131, 214);
 //   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -101,7 +100,7 @@ onUnmounted(() => {
 .logo span {
   font-size: 24px;
   font-weight: bold;
-  color: #d8f7f7;
+  color: #ffffff;
   text-shadow: 0 0 10px rgba(247, 253, 253, 0.5);
 }
 

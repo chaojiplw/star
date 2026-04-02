@@ -187,50 +187,54 @@ const goalNames = computed<string[]>(() => {
 })
 // moved up
 const onNavFromHeader = (key: string) => {
-    if (key === '模型介绍') {
-        showModelMgmt.value = !showModelMgmt.value
-        if (showModelMgmt.value) {
-            showRunPanel.value = false
-            showScenarioEval.value = false
-        }
+    // if (key === '模型介绍') {
+    //     showModelMgmt.value = !showModelMgmt.value
+    //     if (showModelMgmt.value) {
+    //         showRunPanel.value = false
+    //         showScenarioEval.value = false
+    //     }
+    //     return
+    // }
+    if (key === '首页') {
+        router.push('/')
         return
     }
-    if (key === '情景评价') {
-        if (!scenarioEvalShowResults.value) {
-            // 尚未运行情景，不显示
-            return
-        }
-        showScenarioEval.value = !showScenarioEval.value
-        if (showScenarioEval.value) {
-            showModelMgmt.value = false
-            showRunPanel.value = false
-            showRunMonitor.value = false
-        }
-        return
-    }
-    if (key === '中间展示') {
-        if (modelRunning.value || hasRunFinished.value) {
-            showRunMonitor.value = !showRunMonitor.value
-        }
-        if (showRunMonitor.value) {
-            showModelMgmt.value = false
-            showRunPanel.value = false
-            showScenarioEval.value = false
-            showResultAnalysis.value = false
-        }
-        return
-    }
-    if (key === '结果分析') {
-        if (!hasRunFinished.value) return
-        showResultAnalysis.value = !showResultAnalysis.value
-        if (showResultAnalysis.value) {
-            showModelMgmt.value = false
-            showRunPanel.value = false
-            showScenarioEval.value = false
-            showRunMonitor.value = false
-        }
-        return
-    }
+    // if (key === '情景评价') {
+    //     if (!scenarioEvalShowResults.value) {
+    //         // 尚未运行情景，不显示
+    //         return
+    //     }
+    //     showScenarioEval.value = !showScenarioEval.value
+    //     if (showScenarioEval.value) {
+    //         showModelMgmt.value = false
+    //         showRunPanel.value = false
+    //         showRunMonitor.value = false
+    //     }
+    //     return
+    // }
+    // if (key === '中间展示') {
+    //     if (modelRunning.value || hasRunFinished.value) {
+    //         showRunMonitor.value = !showRunMonitor.value
+    //     }
+    //     if (showRunMonitor.value) {
+    //         showModelMgmt.value = false
+    //         showRunPanel.value = false
+    //         showScenarioEval.value = false
+    //         showResultAnalysis.value = false
+    //     }
+    //     return
+    // }
+    // if (key === '结果分析') {
+    //     if (!hasRunFinished.value) return
+    //     showResultAnalysis.value = !showResultAnalysis.value
+    //     if (showResultAnalysis.value) {
+    //         showModelMgmt.value = false
+    //         showRunPanel.value = false
+    //         showScenarioEval.value = false
+    //         showRunMonitor.value = false
+    //     }
+    //     return
+    // }
     // 其他项默认关闭面板
     showModelMgmt.value = false
     showRunPanel.value = false

@@ -1,7 +1,8 @@
 <template>
     <div class="header">
       <div class="logo">
-        <span>黄河上游水库群优化调度系统</span>
+        <img src="@/assets/logo/logo2.png" alt="Logo" class="logo-image" />
+        <span>水土保持智能监管平台</span>
       </div>
       <nav class="nav">
         <ul>
@@ -69,8 +70,9 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 60px;
+  background: #000E38;
 //    background: linear-gradient(135deg, rgba(30, 60, 114, 0.8) 0%, rgba(42, 82, 152, 0.8) 100%);
-   background: rgb(51, 131, 214);
+  // background: rgb(51, 131, 214);
 //   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   display: flex;
   align-items: center;
@@ -86,7 +88,14 @@ onUnmounted(() => {
 .logo {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
+}
+
+.logo-image {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .logo span {

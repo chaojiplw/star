@@ -147,17 +147,10 @@ const map = ref<maplibregl.Map | null>(null)
 const router = useRouter()
 type LngLatTuple = [number, number];
 const defaultCenter: LngLatTuple = [104.0, 37.0];
-// 峡谷 DOM 图标标记（置顶）
-const canyonIconMarkers: maplibregl.Marker[] = [];
-// 峡谷数据卡片 DOM 标记
-const canyonCardMarkers: maplibregl.Marker[] = [];
-// 放大到该层级及以上显示数据卡片
-const CARD_MIN_ZOOM = 7;
-// 以名称索引三峡的图标与卡片，便于后续校正坐标
-const canyonMarkersByName: Record<string, { icon: maplibregl.Marker; card: maplibregl.Marker }> = {};
 // 发电站 DOM 标记
 const powerStationMarkers: maplibregl.Marker[] = [];
 const powerStationsLoaded = ref<boolean>(false)
+const allPowerStations: Array<{ id: number; lng: number; lat: number; name: string }> = []
 // 顶部 Header 导航联动
 const showModelMgmt = ref<boolean>(false)
 const showParamPanel = ref<boolean>(false)
@@ -414,85 +407,10 @@ const startMapConfig = {
 // 峡谷位置数据
 const geojson = {
     'type': 'FeatureCollection',
-    'features': [
-        {
-            'type': 'Feature',
-            'properties': {
-                'message': '黑山峡',
-                'iconSize': [40, 40],
-                'type': 'canyon',
-                'color': '#ff6b35'
-            },
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [104.8, 37.35] // 黑山峡大致坐标
-            }
-        },
-        {
-            'type': 'Feature',
-            'properties': {
-                'message': '龙羊峡',
-                'iconSize': [40, 40],
-                'type': 'canyon',
-                'color': '#4ecdc4'
-            },
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [100.9, 36.2] // 龙羊峡大致坐标
-            }
-        },
-        {
-            'type': 'Feature',
-            'properties': {
-                'message': '刘家峡',
-                'iconSize': [40, 40],
-                'type': 'canyon',
-                'color': '#45b7d1'
-            },
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [103.3, 35.9] // 刘家峡大致坐标
-            }
-        }
-    ]
+    'features': []
 };
-// 用于传给数据面板的峡谷名称
-const canyonNames = geojson.features.map((f: any) => f.properties.message)
 // 保留：无额外自定义位图图标，峡谷图层仅用于显示文本，图标由 DOM Marker 承担
 
-// 示例数据（可替换为真实数据源）
-const reservoirData: Record<string, {
-    guaranteedPower: string | number;     // 保证出力
-    installedCapacity: string | number;   // 装机容量
-    powerCoefficient: string | number;    // 出力系数
-    designHead: string | number;          // 设计水头
-    startLevel: string | number;          // 起调水位
-}> = {
-    '龙羊峡': { guaranteedPower: '587', installedCapacity: '1280', powerCoefficient: '8.3', designHead: '122', startLevel: '0' },
-    '刘家峡': { guaranteedPower: '400', installedCapacity: '1225', powerCoefficient: '8.3', designHead: '100', startLevel: '0' },
-    '黑山峡': { guaranteedPower: '-', installedCapacity: '-', powerCoefficient: '-', designHead: '-', startLevel: '-' },
-}
-// 数据卡片按名称的个性化像素偏移（相对图标向上/左右微调）
-const canyonCardOffsetByName: Record<string, [number, number]> = {
-    '龙羊峡': [0, -200],
-    '刘家峡': [0, -350],
-    '黑山峡': [0, -50],
-}
-// 关键水库名称匹配（兼容 shapefile 中可能的别名）
-const keyReservoirAliases: Record<string, string[]> = {
-    '龙羊峡': ['龙羊峡', '龙羊峡水电站', '龙羊峡水库'],
-    '刘家峡': ['刘家峡', '刘家峡水电站', '刘家峡水库'],
-    '黑山峡': ['黑山峡', '黑山峡水电站', '黑山峡水库'],
-}
-function matchKeyReservoirName(inputName: string): string | null {
-    const name = String(inputName ?? '').trim();
-    if (!name) return null;
-    for (const canonical of Object.keys(keyReservoirAliases)) {
-        const aliases = keyReservoirAliases[canonical];
-        if (aliases.some(alias => name.includes(alias))) return canonical;
-    }
-    return null;
-}
 // 加载峡谷标记
 const loadCanyonMarkers = async (mapInstance: maplibregl.Map): Promise<void> => {
     try {
@@ -529,77 +447,89 @@ const loadCanyonMarkers = async (mapInstance: maplibregl.Map): Promise<void> => 
         // 图标由 DOM 标记负责，画布层只显示文本
 
 
-        console.log('峡谷标记加载成功');
-
-        // 基于 DOM 的峡谷图标与信息标签（置顶显示）
-        for (const feature of (geojson.features as any[])) {
-            const { message, color } = feature.properties;
-            const [lng, lat] = feature.geometry.coordinates as [number, number];
-
-            // DOM 图标标记（置于最上层，使用 iconfont 水库图标）
-            const iconEl = document.createElement('div');
-            iconEl.className = 'canyon-reservoir-marker';
-            iconEl.innerHTML = `
-                <svg class="icon canyon-reservoir-icon" aria-hidden="true">
-                    <use xlink:href="#icon-shuiku-01"></use>
-                </svg>
-            `;
-
-            const iconMarker = new maplibregl.Marker({ element: iconEl, anchor: 'bottom' })
-                .setLngLat([lng, lat])
-                .addTo(mapInstance);
-            iconMarker.getElement().style.zIndex = '5';
-            canyonIconMarkers.push(iconMarker);
-
-            // 数据卡片（随缩放显示/隐藏）
-            const card = document.createElement('div');
-            card.className = 'reservoir-card';
-            const data = reservoirData[message as keyof typeof reservoirData] || { startLevel: '-', flow: '-', maxLevel: '-', maxOutflow: '-' };
-            card.innerHTML = `
-                <div class="card-inner">
-                    <div class="card-title" style="color:${color}">${message}</div>
-                    <div class="card-row">保证出力：<span>${data.guaranteedPower}</span></div>
-                    <div class="card-row">装机容量：<span>${data.installedCapacity}</span></div>
-                    <div class="card-row">出力系数：<span>${data.powerCoefficient}</span></div>
-                    <div class="card-row">设计水头：<span>${data.designHead}</span></div>
-                    <div class="card-row">起调水位：<span>${data.startLevel}</span></div>
-                </div>
-                <div class="card-arrow"></div>
-            `;
-            // 初始按当前缩放决定显隐
-            card.style.display = 'block';
-
-            const specificOffset = canyonCardOffsetByName[message] || [0, -50];
-            const cardMarker = new maplibregl.Marker({ element: card, anchor: 'bottom', offset: specificOffset })
-                .setLngLat([lng, lat])
-                .addTo(mapInstance);
-            cardMarker.getElement().style.zIndex = '5';
-            canyonCardMarkers.push(cardMarker);
-            // 记录映射，便于后续按 shapefile 精确纠偏
-            canyonMarkersByName[message] = { icon: iconMarker, card: cardMarker };
-        }
-
-        // 卡片始终显示，无需监听缩放显示/隐藏
+console.log('峡谷标记加载成功');
 
     } catch (error) {
         console.error('加载峡谷标记失败:', error);
     }
 };
 
-// 加载发电站点位（shp -> DOM Marker 使用 iconfont）
+// 加载发电站点位（使用聚合功能）
+// 加载发电站点位（使用聚合功能）
 const loadPowerStationMarkers = async (mapInstance: maplibregl.Map): Promise<void> => {
     try {
-        // 读取 shapefile（点要素）
-        const url = new URL(`${import.meta.env.BASE_URL}powerstation/YRB_HYDRO_JUNCTION.shp`, window.location.href).toString()
-        const data: any = await shp(url)
+        const iconUrl = new URL('@/assets/siltArrester.svg', import.meta.url).href
 
+        // 1. 你的图片预处理逻辑（保持不变）
+        const loadPngIcon = (url: string, size: number): Promise<HTMLImageElement> => {
+            return new Promise((resolve, reject) => {
+                const img = new Image()
+                img.crossOrigin = 'anonymous'
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    canvas.width = size
+                    canvas.height = size
+                    const ctx = canvas.getContext('2d')
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, size, size)
+                        const resizedImg = new Image()
+                        resizedImg.onload = () => resolve(resizedImg)
+                        resizedImg.onerror = reject
+                        resizedImg.src = canvas.toDataURL('image/png')
+                    } else {
+                        reject(new Error('无法获取 canvas 上下文'))
+                    }
+                }
+                img.onerror = reject
+                img.src = url
+            })
+        }
+
+
+        // const iconUrl = new URL('@/assets/siltArrester.png', import.meta.url).href
+        console.log('图片原始路径:', iconUrl);
+        const [smallIcon, largeIcon] = await Promise.all([
+            loadPngIcon(iconUrl, 40),
+            loadPngIcon(iconUrl, 60)
+        ])
+        // 【修改开始】直接添加 HTMLImageElement，不需要再调用 loadImage
+        try {
+            // smallIcon 和 largeIcon 已经是加载好的图片对象，直接传给 addImage
+            mapInstance.addImage('small-cluster-icon', smallIcon);
+            mapInstance.addImage('large-cluster-icon', largeIcon);
+            
+            console.log('图标添加成功'); // 这行会立即执行
+        } catch (err) {
+            console.error('图标添加失败:', err);
+            return;
+        }
+
+// 4. 数据加载逻辑（保持不变）
+        const url = new URL(`${import.meta.env.BASE_URL}powerstation/Export_Output_32.shp`, window.location.href).toString()
+        const data: any = await shp(url)
         const featureCollection = normalizeToFeatureCollection(data)
 
-        // 清理旧标记
+        // 查看属性字段
+        if (featureCollection.features.length > 0) {
+            console.log('========== Shapefile 属性信息 ==========')
+            console.log('总要素数量:', featureCollection.features.length)
+            console.log('属性字段:', Object.keys(featureCollection.features[0].properties || {}))
+            console.log('\n第一个要素的属性:')
+            console.log(featureCollection.features[0].properties)
+            console.log('\n前5个要素的属性:')
+            featureCollection.features.slice(0, 5).forEach((f, i) => {
+                console.log(`要素 ${i + 1}:`, f.properties)
+            })
+            console.log('==========================================')
+        }
+
+        // 清理旧数据（保持不变）
+        // ... (清理代码略，同原代码) ...
         for (const m of powerStationMarkers) m.remove()
         powerStationMarkers.length = 0
+        allPowerStations.length = 0
 
-        // 提取点坐标并添加 DOM 标记
+        // ... (解析点坐标代码略，同原代码) ...
         const forEachPoint = (geom: GeoJSON.Geometry | null, fn: (lng: number, lat: number) => void) => {
             if (!geom) return
             const t = geom.type
@@ -607,103 +537,150 @@ const loadPowerStationMarkers = async (mapInstance: maplibregl.Map): Promise<voi
             if (t === 'Point') fn(c[0], c[1])
             else if (t === 'MultiPoint') for (const p of c) fn(p[0], p[1])
         }
-
         const getName = (props: Record<string, any>): string => {
             const candidates = ['NAME', 'Name', 'name', 'STATION', 'Station', 'station', '备注', '站名', 'RES_NAME']
             for (const k of candidates) {
                 if (props && props[k] != null && String(props[k]).trim() !== '') return String(props[k])
             }
-            return '水电站'
+            return '淤地坝'
         }
 
-        // 收集 shapefile 中的电站点（两阶段：先收集、再匹配纠偏、最后绘制剩余点）
-        const psPoints: Array<{ id: number; lng: number; lat: number; name: string }> = []
+const points: GeoJSON.Feature[] = []
         let pid = 0
         for (const f of featureCollection.features) {
             const props = (f.properties || {}) as Record<string, any>
             const stationName = getName(props)
             forEachPoint(f.geometry, (lng, lat) => {
-                psPoints.push({ id: pid++, lng, lat, name: stationName })
+                allPowerStations.push({ id: pid++, lng, lat, name: stationName })
+                points.push({
+                    type: 'Feature',
+                    properties: { ...props, name: stationName },
+                    geometry: { type: 'Point', coordinates: [lng, lat] }
+                })
             })
         }
 
-        // 第一阶段：按名称匹配三座关键水库，纠偏到 shapefile 精确坐标
-        const matchedPointIds = new Set<number>()
-        const matchedCanonical = new Set<string>()
-        for (const p of psPoints) {
-            const canonical = matchKeyReservoirName(p.name)
-            if (canonical && canyonMarkersByName[canonical] && !matchedCanonical.has(canonical)) {
-                const entry = canyonMarkersByName[canonical]
-                entry.icon.setLngLat([p.lng, p.lat])
-                entry.card.setLngLat([p.lng, p.lat])
-                matchedPointIds.add(p.id)
-                matchedCanonical.add(canonical)
-            }
+        // 5. 添加 Source
+        if (mapInstance.getSource('powerstations')) {
+            mapInstance.removeSource('powerstations')
         }
+        mapInstance.addSource('powerstations', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: points },
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 50
+        })
 
-        // 第二阶段：若仍有未匹配的（比如 shapefile 名称为拼音），按“最近点”进行纠偏
-        function haversineKm(lng1: number, lat1: number, lng2: number, lat2: number): number {
-            const toRad = (d: number) => d * Math.PI / 180
-            const R = 6371
-            const dLat = toRad(lat2 - lat1)
-            const dLng = toRad(lng2 - lng1)
-            const a = Math.sin(dLat/2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) ** 2
-            return 2 * R * Math.asin(Math.sqrt(a))
-        }
-        const NEAR_THRESHOLD_KM = 50
-        for (const canonical of ['龙羊峡','刘家峡','黑山峡']) {
-            if (!canyonMarkersByName[canonical] || matchedCanonical.has(canonical)) continue
-            const current = canyonMarkersByName[canonical].icon.getLngLat()
-            let best: { id: number; lng: number; lat: number; dist: number } | null = null
-            for (const p of psPoints) {
-                if (matchedPointIds.has(p.id)) continue
-                const d = haversineKm(current.lng, current.lat, p.lng, p.lat)
-                if (best == null || d < best.dist) best = { id: p.id, lng: p.lng, lat: p.lat, dist: d }
-            }
-            if (best && best.dist <= NEAR_THRESHOLD_KM) {
-                const entry = canyonMarkersByName[canonical]
-                entry.icon.setLngLat([best.lng, best.lat])
-                entry.card.setLngLat([best.lng, best.lat])
-                matchedPointIds.add(best.id)
-                matchedCanonical.add(canonical)
-            }
-        }
+        // 6. 【关键修改】添加图层（移到这里，确保图片已存在）
+        // 移除旧图层
+        if (mapInstance.getLayer('powerstations-unclustered')) mapInstance.removeLayer('powerstations-unclustered')
+        if (mapInstance.getLayer('powerstations-cluster')) mapInstance.removeLayer('powerstations-cluster')
 
-        // 第三阶段：绘制未匹配的电站点
-        for (const p of psPoints) {
-            if (matchedPointIds.has(p.id)) continue
-            const el = document.createElement('div')
-            el.className = 'powerstation-marker'
-            el.title = p.name
-            el.innerHTML = `
-                <svg class="icon powerstation-icon" aria-hidden="true">
-                    <use xlink:href="#icon-shuiku-01"></use>
-                </svg>
-            `
-            const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-                .setLngLat([p.lng, p.lat])
+        mapInstance.addLayer({
+            id: 'powerstations-cluster',
+            type: 'symbol',
+            source: 'powerstations',
+            filter: ['has', 'point_count'],
+layout: {
+                'icon-image': [
+                    'case',
+                    ['<', ['get', 'point_count'], 10],
+                    'small-cluster-icon',
+                    'large-cluster-icon'
+                ],
+                'icon-size': 1,
+                'text-field': ['get', 'point_count'],
+                'text-size': 14,
+                'text-offset': [0, 0.2],
+                'text-anchor': 'top'
+            },
+            paint: {
+                'text-color': '#000',
+                'text-halo-color': '#fff',
+                'text-halo-width': 2
+            }
+        })
+
+        mapInstance.addLayer({
+            id: 'powerstations-unclustered',
+            type: 'symbol',
+            source: 'powerstations',
+            filter: ['!', ['has', 'point_count']],
+            layout: {
+                'icon-image': 'small-cluster-icon',
+                'icon-size': 1,
+                'icon-allow-overlap': true
+            }
+        })
+
+// 交互事件（保持不变）
+        mapInstance.on('click', 'powerstations-unclustered', (e) => {
+            const coordinates = e.features[0].geometry.coordinates as [number, number]
+            const props = e.features[0].properties || {}
+            
+            const keyTranslation: Record<string, string> = {
+                'OBJECTID': '对象ID',
+                'DamY': '坝坐标Y',
+                'DamX': '坐标X',
+                'Dam_Elv': '坝体高程',
+                'Dam_Len': '坝长',
+                'Dam_Area': '坝面积',
+                'Dam_Cont': '坝流域',
+                'Dam_LenS': '坝长S',
+                'Dam_VolR': '坝体积R',
+                'Dam_VolS': '坝体积S',
+                'Dam_VolT': '坝总体积',
+                'BASINCODE': '流域代码',
+                'CHANNELID': '河道ID',
+                'CNL_SLOPE': '河道坡度',
+                'DOWNID': '下游ID',
+                'HIERARCODE': '层级代码',
+                'LEVEL': '级别',
+                'PYMDUPID': 'PYMDUPID',
+                'STRAHLER': '斯特拉勒河流分级',
+                'SUBBASINCD': '子流域代码',
+                'UPSUBAREA': '上游子流域面积',
+                'name': '名称'
+            }
+            
+            let propsHtml = ''
+            for (const [key, value] of Object.entries(props)) {
+                if (value !== null && value !== undefined && value !== '') {
+                    const translatedKey = keyTranslation[key] || key
+                    propsHtml += `<div class="ps-prop"><span class="ps-key">${translatedKey}:</span> <span class="ps-value">${value}</span></div>`
+                }
+            }
+            
+            new maplibregl.Popup({ offset: 12 })
+                .setLngLat(coordinates)
+                .setHTML(`<div class="ps-popup">${propsHtml}</div>`)
                 .addTo(mapInstance)
-            marker.getElement().style.zIndex = '4'
-            el.addEventListener('click', (e) => {
-                e.stopPropagation()
-                new maplibregl.Popup({ offset: 12 })
-                    .setLngLat([p.lng, p.lat])
-                    .setHTML(`
-                        <div class="ps-popup">
-                            <div class="ps-title">${p.name}</div>
-                        </div>
-                    `)
-                    .addTo(mapInstance)
-            })
-            powerStationMarkers.push(marker)
-        }
+        })
 
-        console.log(`发电站点位加载完成：${powerStationMarkers.length} 个`)
+        mapInstance.on('mouseenter', 'powerstations-unclustered', () => mapInstance.getCanvas().style.cursor = 'pointer')
+        mapInstance.on('mouseleave', 'powerstations-unclustered', () => mapInstance.getCanvas().style.cursor = '')
+
+        mapInstance.on('click', 'powerstations-cluster', (e) => {
+            const features = mapInstance.queryRenderedFeatures(e.point, { layers: ['powerstations-cluster'] })
+            const clusterId = features[0].properties?.cluster_id
+            mapInstance.getSource('powerstations').getClusterExpansionZoom(clusterId, (err, zoom) => {
+                if (err) return
+                mapInstance.easeTo({
+                    center: features[0].geometry.coordinates as [number, number],
+                    zoom: zoom
+                })
+            })
+        })
+        
+        mapInstance.on('mouseenter', 'powerstations-cluster', () => mapInstance.getCanvas().style.cursor = 'pointer')
+        mapInstance.on('mouseleave', 'powerstations-cluster', () => mapInstance.getCanvas().style.cursor = '')
+
+        console.log(`发电站点位加载完成：${allPowerStations.length} 个`)
     } catch (error) {
         console.error('加载发电站点位失败:', error)
     }
 }
-
 // 加载四级河网图层（shp -> GeoJSON）
 const loadRiverLayer = async (mapInstance: maplibregl.Map): Promise<void> => {
     try {
@@ -1104,12 +1081,6 @@ onMounted(() => {
 })
 onUnmounted(() => {
     if (map.value){
-        // 清理峡谷 DOM 图标
-        for (const m of canyonIconMarkers) m.remove()
-        canyonIconMarkers.length = 0
-        // 清理数据卡片
-        for (const m of canyonCardMarkers) m.remove()
-        canyonCardMarkers.length = 0
         // 清理发电站标记
         for (const m of powerStationMarkers) m.remove()
         powerStationMarkers.length = 0
@@ -1234,21 +1205,7 @@ onUnmounted(() => {
             border-radius: 8px;
             padding: 12px;
             box-shadow: 0 4px 12px rgba(246, 92, 92, 0.15);
-        }
-
-        // 峡谷（刘家峡/龙羊峡/黑山峡）iconfont 标记样式
-        :deep(.canyon-reservoir-marker) {
-            display: grid;
-            place-items: center;
-            width: auto;
-            height: auto;
-            background: transparent;
-        }
-        :deep(.canyon-reservoir-icon) {
-            width: 40px;
-            height: 40px;
-            color: inherit;
-        }
+}
 
         // 发电站 DOM 标记样式
         :deep(.powerstation-marker) {
@@ -1264,53 +1221,25 @@ onUnmounted(() => {
             width: 28px;
             height: 28px;
         }
-        :deep(.ps-popup .ps-title) {
+:deep(.ps-popup .ps-title) {
             font-weight: 600;
             color: #fa0000;
         }
-
-        // 数据卡片样式（跟 overview 风格一致）
-        :deep(.reservoir-card) {
-            position: relative;
-            background: rgba(255,255,255,0.98);
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-            padding: 10px 12px 12px 12px;
-            width: 240px;
-            pointer-events: auto;
-        }
-        :deep(.reservoir-card .card-inner) {
+        :deep(.ps-popup .ps-prop) {
             display: flex;
-            flex-direction: column;
-            gap: 6px;
+            margin: 4px 0;
+            font-size: 12px;
         }
-        :deep(.reservoir-card .card-title) {
-            font-size: 14px;
+        :deep(.ps-popup .ps-key) {
             font-weight: 600;
             color: #333;
-            margin-bottom: 4px;
+            min-width: 80px;
+            margin-right: 8px;
         }
-        :deep(.reservoir-card .card-row) {
-            font-size: 12px;
-            color: #555;
-            display: flex;
-            justify-content: space-between;
-        }
-        :deep(.reservoir-card .card-row span) {
-            color: #333;
-            font-weight: 500;
-        }
-        :deep(.reservoir-card .card-arrow) {
-            position: absolute;
-            left: 50%;
-            bottom: -10px;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 10px solid rgba(255,255,255,0.98);
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+        :deep(.ps-popup .ps-value) {
+            color: #666;
+            flex: 1;
+            word-break: break-all;
         }
     }
 

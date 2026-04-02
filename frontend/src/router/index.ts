@@ -7,8 +7,14 @@ import {
 
 const routes: Array<RouteRecordRaw> = [
   {
-    //路由初始指向
+    //路由初始指向 - 介绍页面
     path: "/",
+    name: "Introduction",
+    component: () => import("@/views/Introduction.vue"),
+  },
+  {
+    //原 Home 页面
+    path: "/home",
     name: "Home",
     component: () => import("@/views/Home.vue"),
   },

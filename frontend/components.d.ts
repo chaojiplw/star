@@ -22,6 +22,7 @@ declare module 'vue' {
     ModelRunPanel: typeof import('./src/components/ModelRunPanel.vue')['default']
     ParamConfigPanel: typeof import('./src/components/ParamConfigPanel.vue')['default']
     ResultAnalysisPanel: typeof import('./src/components/ResultAnalysisPanel.vue')['default']
+    RoundedTrapezoid: typeof import('./src/components/RoundedTrapezoid.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RunMonitorPanel: typeof import('./src/components/RunMonitorPanel.vue')['default']
